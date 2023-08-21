@@ -36,3 +36,26 @@
     transform: rotate(360deg);
   }
 }
+body.dark {
+  background-color: black;
+}
+/* Dark theme styles */
+.dark .bg-darkBackground {
+  background-color: black;
+}
+.dark .bg-greyBackground {
+  background-color: rgb(40, 39, 39);
+}
+.dark .text-white {
+  color: white;
+}
+
+/* Light theme styles */
+.bg-lightBackground {
+  background-color: white;
+}
+
+.text-black {
+  color: black;
+}
+
