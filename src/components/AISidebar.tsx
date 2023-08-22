@@ -16,7 +16,7 @@ type Conversation = {
 };
 type Message = {
   sender: "user" | "bot";
-  text: string;
+  text: any;
 };
 
 interface Props {

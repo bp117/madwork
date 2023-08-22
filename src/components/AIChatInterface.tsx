@@ -10,10 +10,13 @@ import AISidebar from "./AISidebar";
 import AppBar from "./AppBar";
 import AIPrompts from "./AIprompts";
 import { useTheme } from "./ThemeContext";
+import { Tab, Tabs, Card, CardHeader, CardContent, Typography,Link } from "@mui/material";
+
+import { AnySoaRecord } from "dns";
 
 type Message = {
   sender: "user" | "bot";
-  text: string;
+  text: any;
 };
 type Conversation = {
   id: string;
@@ -25,74 +28,114 @@ const AIChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isBotTyping, setIsBotTyping] = useState(false);
+
   const { theme } = useTheme();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
+
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   useEffect(() => {
- //   localStorage.setItem("conversations", JSON.stringify(conversations));
- console.log("ls:",localStorage.getItem("conversations"))
+    //   localStorage.setItem("conversations", JSON.stringify(conversations));
+    console.log("ls:", localStorage.getItem("conversations"));
     const savedConversations = localStorage.getItem("conversations");
     if (savedConversations) {
-   
-    try {
-      const parsedConversations = JSON.parse(savedConversations);
-      console.log("parsed:",parsedConversations)
-       setConversations(parsedConversations);
-  } catch (err) {
-      console.error("Error parsing saved conversations:", err);
-  }
-}
- }, []);
-  
+      try {
+        const parsedConversations = JSON.parse(savedConversations);
+        console.log("parsed:", parsedConversations);
+        setConversations(parsedConversations);
+      } catch (err) {
+        console.error("Error parsing saved conversations:", err);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     // Store conversations in local storage whenever they change
     localStorage.setItem("conversations", JSON.stringify(conversations));
   }, [conversations]);
-  
-    
-// This is a mock function to simulate a bot reply. Replace it with your actual bot response logic.
-const getBotReply = (message: string) => {
-  return "This is a mock reply from the bot!";
-};
+  // Mocked fetchBotResponse function
+  const fetchBotResponse =  (message: string) => {
+    // Normally, here you'd use something like axios or fetch to call your API
+    // For now, I'll mock it:
+   // await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulated delay
 
-const handleSendMessage = () => {
-  setIsPromptMode(false);
-  // Create a new user message
-  const userMessage = { sender: "user", text: inputText } as Message;
-
-  // Get a reply from the bot
-  const botReplyText = getBotReply(inputText);
-  const botMessage = { sender: "bot", text: botReplyText } as Message;
-
-  // Combine user message and bot reply
-  const updatedMessages = [...messages, userMessage, botMessage];
-  
-  // Update the latest conversation to include these messages.
-  let updatedConversations;
-  if (conversations.length > 0) {
-    const lastConversation = conversations[conversations.length - 1];
-    updatedConversations = [
-      ...conversations.slice(0, -1),
-      {
-        ...lastConversation,
-        messages: [...lastConversation.messages, userMessage, botMessage],
+    return {
+      duration: "9783 ms",
+      response: {
+        result: [
+          {
+            context: "fsjdfhsdjfhs",
+            book: "sdhfjsdh",
+            section_title: "dfd",
+            hyperlink: "http://sdfd/",
+            generated_resp: "sdfdsfdsfdsds",
+          },
+          {
+            context: "fsjdfhsdjfhs",
+            book: "sdhfjsdh",
+            section_title: "dfsd",
+            hyperlink: "http://sdfd/",
+            generated_resp: "sdfdsfdsfdsds",
+          },
+        ],
       },
-    ];
-  } else {
-    const newConversation = {
-      id:userMessage.text,
-      messages: [userMessage, botMessage],
     };
-    updatedConversations = [newConversation];
-  }
-  
-  setMessages(updatedMessages);
-  setConversations(updatedConversations);
-  setInputText("");
-};
+  };
+  // This is a mock function to simulate a bot reply. Replace it with your actual bot response logic.
+  const getBotReply =  (message: string) => {
+    const response =  fetchBotResponse(message);
+    setIsBotTyping(false);
+    console.log("response:",response);
+    return response
+  };
 
+  const handleSendMessage = () => {
+    setIsPromptMode(false);
+    // Simulate bot thinking and typing...
+    setIsBotTyping(true);
+    // Create a new user message
+    const userMessage = { sender: "user", text: inputText } as Message;
+
+    // Get a reply from the bot
+    const botReplyText = getBotReply(inputText);
+    const botMessage = { sender: "bot", text: botReplyText } as Message;
+
+    // Combine user message and bot reply
+    const updatedMessages = [...messages, userMessage, botMessage];
+
+    // Update the latest conversation to include these messages.
+    let updatedConversations;
+    if (conversations.length > 0) {
+      const lastConversation = conversations[conversations.length - 1];
+      updatedConversations = [
+        ...conversations.slice(0, -1),
+        {
+          ...lastConversation,
+          messages: [...lastConversation.messages, userMessage, botMessage],
+        },
+      ];
+    } else {
+      const newConversation = {
+        id: userMessage.text,
+        messages: [userMessage, botMessage],
+      };
+      updatedConversations = [newConversation];
+    }
+
+    setMessages(updatedMessages);
+    setConversations(updatedConversations);
+    setInputText("");
+
+   
+  };
 
   const startNewConversation = () => {
     const newConversationId = "Date.now().toString()"; // a simple unique ID
@@ -112,56 +155,45 @@ const handleSendMessage = () => {
 
   const sendMessage = async () => {
     if (inputText.trim()) {
-       setIsPromptMode(false);
-       
-       // If there's no current conversation, create one
-       if (!currentConversationId) {
-          startNewConversation();
-       }
- 
-       const newMessages = [...messages, { sender: "user", text: inputText } as Message];
-       setMessages(newMessages);
-       setInputText("");
- 
-       // Now, since we ensured there's always a currentConversationId
-       const updatedConversations = conversations.map((conv) => {
-          if (conv.id === currentConversationId) {
-             return { ...conv, messages: newMessages };
-          }
-          return conv;
-       });
-       setConversations(updatedConversations);
- 
-       // Simulate bot thinking
-       setTimeout(() => {
-          typeBotMessage("Sample response from bot");
-       }, 1000);
-    }
- };
- 
+      setIsPromptMode(false);
 
-  const typeBotMessage = (fullMessage: string) => {
-    let currentText = "";
-    let i = 0;
-
-    function typeChar() {
-      if (i < fullMessage.length) {
-        currentText += fullMessage[i];
-        i++;
-        setMessages((prevMessages) => {
-          const newMessages = [...prevMessages];
-          if (i === 1) {
-            newMessages.push({ sender: "bot", text: currentText });
-          } else {
-            newMessages[newMessages.length - 1].text = currentText;
-          }
-          return newMessages;
-        });
-        setTimeout(typeChar, 50); // adjust for typing speed
+      // If there's no current conversation, create one
+      if (!currentConversationId) {
+        startNewConversation();
       }
-    }
 
-    typeChar();
+      const newMessages = [
+        ...messages,
+        { sender: "user", text: inputText } as Message,
+      ];
+      setMessages(newMessages);
+      setInputText("");
+
+      // Now, since we ensured there's always a currentConversationId
+      const updatedConversations = conversations.map((conv) => {
+        if (conv.id === currentConversationId) {
+          return { ...conv, messages: newMessages };
+        }
+        return conv;
+      });
+      setConversations(updatedConversations);
+
+      // Simulate bot thinking
+      setTimeout(() => {
+        typeBotMessage("Sample response from bot");
+      }, 1000);
+    }
+  };
+
+  const typeBotMessage = async (message: string) => {
+    setIsBotTyping(true);
+
+    // Fetch response from API
+    const response = await fetchBotResponse(message);
+    let botResp = { sender: "bot", text: response } as Message;
+    setIsBotTyping(false);
+    setMessages((prevMessages) => [...prevMessages, botResp]);
+    console.log(messages)
   };
 
   const handleKeyPress = (e: any) => {
@@ -176,13 +208,13 @@ const handleSendMessage = () => {
   const handleNewChat = () => {
     const newConversation = {
       id: Date.now().toString(),
-      messages: []
+      messages: [],
     };
-  
-    setConversations(prev => [...prev, newConversation]);
+
+    setConversations((prev) => [...prev, newConversation]);
     selectConversation(newConversation.id);
     setSidebarOpen(true);
-    setMessages([]);  // Clear the current chat view.
+    setMessages([]); // Clear the current chat view.
   };
   return (
     <div
@@ -298,7 +330,7 @@ const handleSendMessage = () => {
                 />
               </div>
             ) : (
-              <div className="flex flex-col space-y-4 overflow-y-auto">
+              <div className="flex flex-col h-full space-y-4 overflow-y-auto">
                 {messages.map((msg, index) => (
                   <div
                     key={index}
@@ -321,37 +353,50 @@ const handleSendMessage = () => {
                           : ""
                       }`}
                     >
-                      {msg.sender === "user" ? (
-                        <>
-                          <UserCircleIcon
-                            className={`h-8 w-8 mr-3 ${
-                              theme === "dark" ? "text-white" : ""
-                            }`}
-                          />
-                          <span>{msg.text}</span>
-                        </>
+                      {msg.sender === "bot" && Array.isArray(msg.text.response.result) ? (
+                        <div className="flex items-center p-5">
+                           <BoltIcon
+                                className={`h-8 w-8 mr-3 ${
+                                  theme === "dark" ? "text-white" : ""
+                                }`}
+                              />
+                          
+                                    <Tabs value={tabValue} onChange={(event, newValue) => setTabValue(newValue)}>
+                                        {msg.text.response.result.map((_:AnySoaRecord, idx:any) => (
+                                            <Tab label={`Result ${idx + 1}`} key={idx} />
+                                        ))}
+                                    </Tabs>
+                                    {msg.text.response.result.map((result:any, idx:any) => (
+                                        <div key={idx} hidden={tabValue !== idx} className="tab-content">
+                                            <Card>
+                                                <CardHeader title={`Book: ${result.book}`} />
+                                                <CardContent>
+                                                    <Typography variant="body1">{result.context}</Typography>
+                                                    <Link href={result.hyperlink} target="_blank">{result.section_title}</Link>
+                                                </CardContent>
+                                            </Card>
+                                            <Typography variant="caption">Response Duration: {msg.text.response.duration}</Typography>
+                                        </div>
+                                    ))}
+                                
+                        </div>
                       ) : (
-                        <>
-                          <BoltIcon
-                            className={`h-8 w-8 mr-3 ${
-                              theme === "dark" ? "text-white" : ""
-                            }`}
-                          />
-                          <span>{msg.text}</span>
-                        </>
+                        <div>
+                          {msg.sender === "user" ? (
+                            <>
+                              <UserCircleIcon
+                                className={`h-8 w-8 mr-3 ${
+                                  theme === "dark" ? "text-white" : ""
+                                }`}
+                              />
+                              <span>{msg.text}</span>
+                            </>
+                          ) :undefined}
+                        </div>
                       )}
                     </div>
                   </div>
                 ))}
-                {isTyping && (
-                  <span
-                    className={
-                      theme === "dark" ? "text-gray-400" : "text-gray-500"
-                    }
-                  >
-                    Bot is typing...
-                  </span>
-                )}
               </div>
             )}
 
